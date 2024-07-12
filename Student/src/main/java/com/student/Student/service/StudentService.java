@@ -28,17 +28,29 @@ public class StudentService {
     }
 
     public Student getStudentById(Long id) {
-        List<Student> allStudents = getAllStudents();
-        Optional<Student> studentOptional = allStudents.stream()
-                .filter(student -> student.getId().equals(id))
-                .findFirst();
-
+        List<Student> allStudents = (List<Student>) redisCacheService.get("allStudents");
+        if (allStudents != null) {
+            Optional<Student> studentOptional = allStudents.stream()
+                    .filter(student -> student.getId().equals(id))
+                    .findFirst();
+            if (studentOptional.isPresent()) {
+                return studentOptional.get();
+            }
+        }
+        Optional<Student> studentOptional = studentRepository.findById(id);
         if (studentOptional.isPresent()) {
-            return studentOptional.get();
+            Student student = studentOptional.get();
+            redisCacheService.set("student:" + id, student);
+            if (allStudents != null) {
+                allStudents.add(student);
+                redisCacheService.set("allStudents", allStudents);
+            }
+            return student;
         } else {
             throw new RuntimeException("Student not found with id: " + id);
         }
     }
+
 
     public Student createStudent(Student student) {
         Student createdStudent = studentRepository.save(student);
