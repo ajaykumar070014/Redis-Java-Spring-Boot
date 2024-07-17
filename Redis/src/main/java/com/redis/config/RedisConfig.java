@@ -1,9 +1,11 @@
 package com.redis.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -19,7 +21,8 @@ import io.lettuce.core.resource.ClientResources;
 import java.time.Duration;
 
 @Configuration
-@PropertySource("classpath:application.properties")
+//@PropertySource("classpath:application.properties")
+@RefreshScope
 public class RedisConfig {
 
     @Value("${redis.host}")
@@ -35,9 +38,8 @@ public class RedisConfig {
     private String redisUsername;
 
     @Bean
-    public RedisConnectionFactory redisConnectionFactory() {
+    public RedisConnectionFactory redisConnectionFactory(Environment environment) {
         LettuceClientConfigurationBuilder builder = LettuceClientConfiguration.builder();
-//        This is for the Production Only
         builder.commandTimeout(Duration.ofMillis(200));
         builder.shutdownTimeout(Duration.ofMillis(200));
 
@@ -50,9 +52,12 @@ public class RedisConfig {
 
         LettuceClientConfiguration clientConfiguration = builder.build();
 
-        RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration(redisHost, redisPort);
-        redisConfig.setPassword(redisPassword);
-        redisConfig.setUsername(redisUsername);
+        RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration(
+                environment.getProperty("redis.host", redisHost),
+                Integer.parseInt(environment.getProperty("redis.port", String.valueOf(redisPort)))
+        );
+        redisConfig.setPassword(environment.getProperty("redis.password", redisPassword));
+        redisConfig.setUsername(environment.getProperty("redis.username", redisUsername));
 
         return new LettuceConnectionFactory(redisConfig, clientConfiguration);
     }

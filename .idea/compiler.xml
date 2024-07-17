@@ -9,11 +9,9 @@
         <outputRelativeToContentRoot value="true" />
         <module name="Student" />
         <module name="Redis" />
+        <module name="Staff" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="Staff" target="17" />
-    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
